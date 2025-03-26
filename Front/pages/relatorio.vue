@@ -3,7 +3,6 @@ import { ref, computed, onMounted } from 'vue';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import axios from 'axios';
-import html2canvas from 'html2canvas'; // Importa a biblioteca html2canvas
 
 // Dados de funcionários
 const funcionarios = ref<any[]>([]);
@@ -63,13 +62,17 @@ const exportToExcel = () => {
     alert('Selecione pelo menos um funcionário para exportar!');
     return;
   }
-  const ws = XLSX.utils.json_to_sheet(funcionariosSelecionados.value);
+
+  // Remove a coluna de imagem dos dados exportados
+  const dadosExportados = funcionariosSelecionados.value.map(({ imagem, ...rest }) => rest);
+
+  const ws = XLSX.utils.json_to_sheet(dadosExportados);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Funcionarios');
   XLSX.writeFile(wb, 'relatorio_funcionarios.xlsx');
 };
 
-const exportToPDF = async () => {
+const exportToPDF = () => {
   if (funcionariosSelecionados.value.length === 0) {
     alert('Selecione pelo menos um funcionário para exportar!');
     return;
@@ -81,8 +84,8 @@ const exportToPDF = async () => {
 
   let y = 30; // Posição inicial vertical
 
-  // Adicionar cabeçalho da tabela
-  const headers = ['Foto', 'Nome', 'CPF', 'Empresa', 'Função', 'E-mail'];
+  // Adicionar cabeçalho da tabela sem a coluna de foto
+  const headers = ['Nome', 'CPF', 'Empresa', 'Função', 'E-mail'];
   headers.forEach((header, i) => {
     doc.text(header, 14 + i * 30, y);
   });
@@ -91,24 +94,14 @@ const exportToPDF = async () => {
 
   // Iterar sobre os funcionários selecionados
   for (const f of funcionariosSelecionados.value) {
-    // Capturar a imagem usando html2canvas
-    if (f.imagem) {
-      const imageElement = document.querySelector(`img[src="http://localhost:8080${f.imagem}"]`);
-      if (imageElement) {
-        const canvas = await html2canvas(imageElement as HTMLElement);
-        const imgData = canvas.toDataURL('image/jpeg'); // Converte o canvas para Base64
-        doc.addImage(imgData, 'JPEG', 14, y, 16, 16); // Adiciona a imagem ao PDF
-      }
-    }
+    // Adicionar os dados do funcionário sem a imagem
+    doc.text(f.nome || '', 14, y);
+    doc.text(f.cpf || '', 44, y);
+    doc.text(f.empresa || '', 74, y);
+    doc.text(f.funcao || '', 104, y);
+    doc.text(f.email || '', 134, y);
 
-    // Adicionar os dados do funcionário
-    doc.text(f.nome || '', 30, y + 5); // Nome
-    doc.text(f.cpf || '', 70, y + 5); // CPF
-    doc.text(f.empresa || '', 100, y + 5); // Empresa
-    doc.text(f.funcao || '', 130, y + 5); // Função
-    doc.text(f.email || '', 160, y + 5); // E-mail
-
-    y += 20; // Avança para a próxima linha
+    y += 10; // Avança para a próxima linha
   }
 
   // Salvar o PDF
