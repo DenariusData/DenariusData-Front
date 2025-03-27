@@ -7,10 +7,10 @@ const colorMode = useColorMode()
 const isHovered = ref(false)
 
 // Define a cor do texto dinamicamente
-const textColor = computed(() => (colorMode.value === 'dark' ? 'text-white' : 'text-black'))
+const textColor = 'text-black'
 
 // Define a cor da linha ao passar o mouse
-const hoverLineColor = computed(() => (colorMode.value === 'dark' ? 'bg-white' : 'bg-black'))
+const hoverLineColor = 'bg-black'
 </script>
 
 <template>
@@ -21,7 +21,7 @@ const hoverLineColor = computed(() => (colorMode.value === 'dark' ? 'bg-white' :
     @mouseleave="isHovered = false"
   >
     <img 
-      :src="colorMode.value === 'light' ? '/logo.svg' : '/logo-white.svg'" 
+      src='/logo.svg'
       alt="Logo" 
       class="h-12 transition-all duration-300" 
       :class="{ 'h-16': isHovered }"

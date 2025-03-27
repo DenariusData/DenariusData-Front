@@ -4,206 +4,139 @@ import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import axios from 'axios';
 
-// Dados de funcionários
 const funcionarios = ref<any[]>([]);
-
-// Controle do filtro
-const filtroAtivo = ref(false); // Para exibir ou ocultar o menu de filtros
-const filtrosSelecionados = ref<{ [key: string]: boolean }>({
-  nome: true,
-  funcao: false,
-  empresa: false,
-  cpf: false,
-});
+const funcionariosSelecionados = ref<any[]>([]);
 const termoPesquisa = ref('');
+const filtroSelecionado = ref('nome');
 
-// Função para buscar os dados de funcionários do backend
+const options = [
+  { value: 'nome', label: 'Nome' },
+  { value: 'cpf', label: 'CPF' },
+  { value: 'empresa', label: 'Empresa' },
+  { value: 'funcao', label: 'Função' }
+];
+
+// Função para buscar os funcionários do backend
 const fetchFuncionarios = async () => {
   try {
     const response = await axios.get('http://localhost:8080/api/funcionarios');
-    funcionarios.value = response.data.map((f: any) => ({
-      ...f,
-      selecionado: false, // Adiciona o campo "selecionado" para controle de exportação
-    }));
+    funcionarios.value = response.data;
   } catch (error) {
     console.error('Erro ao carregar os funcionários', error);
   }
 };
 
-// Carregar os dados ao montar o componente
-onMounted(() => {
-  fetchFuncionarios();
-});
+// Formata a URL da imagem para exibição correta
+const formatarURLImagem = (caminhoRelativo: string) => {
+  if (!caminhoRelativo) return '';
+  return `http://localhost:8080${caminhoRelativo}`;
+};
 
-// Computed para filtrar os funcionários com base nos filtros selecionados
+onMounted(fetchFuncionarios);
+
+// Computed para filtrar funcionários com base no filtro selecionado
 const funcionariosFiltrados = computed(() => {
-  return funcionarios.value.filter((f) => {
-    if (!termoPesquisa.value) return true;
-    return (
-      (filtrosSelecionados.value.nome &&
-        f.nome.toLowerCase().includes(termoPesquisa.value.toLowerCase())) ||
-      (filtrosSelecionados.value.funcao &&
-        f.funcao.toLowerCase().includes(termoPesquisa.value.toLowerCase())) ||
-      (filtrosSelecionados.value.empresa &&
-        f.empresa.toLowerCase().includes(termoPesquisa.value.toLowerCase())) ||
-      (filtrosSelecionados.value.cpf && f.cpf.includes(termoPesquisa.value))
-    );
-  });
+  if (!termoPesquisa.value) return funcionarios.value;
+  return funcionarios.value.filter(f => 
+    f[filtroSelecionado.value]?.toLowerCase().includes(termoPesquisa.value.toLowerCase())
+  );
 });
 
-// Computed para obter os funcionários selecionados para exportação
-const funcionariosSelecionados = computed(() => {
-  return funcionariosFiltrados.value.filter((f) => f.selecionado);
-});
-
-// Funções de exportação (Excel e PDF)
+// Exportação para Excel
 const exportToExcel = () => {
   if (funcionariosSelecionados.value.length === 0) {
     alert('Selecione pelo menos um funcionário para exportar!');
     return;
   }
-
-  // Remove a coluna de imagem dos dados exportados
   const dadosExportados = funcionariosSelecionados.value.map(({ imagem, ...rest }) => rest);
-
   const ws = XLSX.utils.json_to_sheet(dadosExportados);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Funcionarios');
   XLSX.writeFile(wb, 'relatorio_funcionarios.xlsx');
 };
 
+// Exportação para PDF
 const exportToPDF = () => {
   if (funcionariosSelecionados.value.length === 0) {
     alert('Selecione pelo menos um funcionário para exportar!');
     return;
   }
-
   const doc = new jsPDF();
   doc.setFontSize(12);
   doc.text('Relatório de Funcionários', 14, 20);
-
-  let y = 30; // Posição inicial vertical
-
-  // Adicionar cabeçalho da tabela sem a coluna de foto
+  let y = 30;
   const headers = ['Nome', 'CPF', 'Empresa', 'Função', 'E-mail'];
   headers.forEach((header, i) => {
     doc.text(header, 14 + i * 30, y);
   });
-
-  y += 10; // Avança para a próxima linha
-
-  // Iterar sobre os funcionários selecionados
+  y += 10;
   for (const f of funcionariosSelecionados.value) {
-    // Adicionar os dados do funcionário sem a imagem
     doc.text(f.nome || '', 14, y);
     doc.text(f.cpf || '', 44, y);
     doc.text(f.empresa || '', 74, y);
     doc.text(f.funcao || '', 104, y);
     doc.text(f.email || '', 134, y);
-
-    y += 10; // Avança para a próxima linha
+    y += 10;
   }
-
-  // Salvar o PDF
   doc.save('relatorio_funcionarios.pdf');
 };
+
 </script>
 
 <template>
-  <div class="ml-16 lg:ml-48 p-4 flex flex-col space-y-6">
-    <div class="flex justify-between items-center">
-      <h2 class="text-xl font-bold">Relatório de Funcionários</h2>
-      <!-- Botão de Filtragem -->
-      <div class="relative">
-        <button
-          @click="filtroAtivo = !filtroAtivo"
-          class="p-2 bg-gray-200 rounded-full hover:bg-gray-300 transition-all"
-        >
-          <Icon name="mdi:filter" class="w-6 h-5" />
-        </button>
-        <!-- Menu de Filtros -->
-        <div
-          v-if="filtroAtivo"
-          class="absolute right-0 mt-2 w-48 bg-white border border-gray-300 shadow-lg rounded-lg p-4"
-        >
-          <p class="text-sm font-bold mb-2">Filtrar por:</p>
-          <div class="space-y-2">
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" v-model="filtrosSelecionados.nome" />
-              <span>Nome</span>
-            </label>
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" v-model="filtrosSelecionados.funcao" />
-              <span>Função</span>
-            </label>
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" v-model="filtrosSelecionados.empresa" />
-              <span>Empresa</span>
-            </label>
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" v-model="filtrosSelecionados.cpf" />
-              <span>CPF</span>
-            </label>
-          </div>
+  <div class="grid justify-items-center">
+    <UCard class="w-3/4">
+      <template #header>
+        <div class="flex justify-between items-center">
+          <h2 class="text-xl font-bold">Relatório de Funcionários</h2>
+          <UPopover>
+            <UButton icon="heroicons:funnel-solid" />
+            <template #panel>
+              <div class="p-4">
+                <URadioGroup v-model="filtroSelecionado" legend="Filtrar por" :options="options" />
+              </div>
+            </template>
+          </UPopover>
         </div>
-      </div>
-    </div>
-    <!-- Campo de Pesquisa -->
-    <input
-      v-if="Object.values(filtrosSelecionados).some((v) => v)"
-      v-model="termoPesquisa"
-      type="text"
-      placeholder="Digite para filtrar"
-      class="p-2 rounded-lg border border-gray-300 shadow-md w-full"
-    />
-    <!-- Tabela -->
-    <div class="overflow-x-auto bg-white rounded-lg shadow-md">
-      <table class="min-w-full table-auto border-collapse">
-        <thead class="bg-gray-200">
-          <tr>
-            <th class="border px-4 py-2 text-center">✔</th>
-            <th class="border px-4 py-2 text-left">Foto</th>
-            <th class="border px-4 py-2 text-left">Nome</th>
-            <th class="border px-4 py-2 text-left">CPF</th>
-            <th class="border px-4 py-2 text-left">Empresa</th>
-            <th class="border px-4 py-2 text-left">Função</th>
+      </template>
+
+      <!-- Input de pesquisa -->
+      <UInput v-model="termoPesquisa" placeholder="Digite para filtrar" class="mt-2" />
+
+      <!-- Tabela -->
+      <table class="w-full border-collapse border border-gray-300 dark:border-gray-600 mt-4">
+        <thead>
+          <tr class="bg-gray-100 dark:bg-gray-800">
+            <th class="border border-gray-300 dark:border-gray-600 p-2"></th>
+            <th class="border border-gray-300 dark:border-gray-600 p-2">Foto</th>
+            <th class="border border-gray-300 dark:border-gray-600 p-2">Nome</th>
+            <th class="border border-gray-300 dark:border-gray-600 p-2">CPF</th>
+            <th class="border border-gray-300 dark:border-gray-600 p-2">Empresa</th>
+            <th class="border border-gray-300 dark:border-gray-600 p-2">Função</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="f in funcionariosFiltrados" :key="f.id">
-            <td class="border px-4 py-2 text-center">
-              <input type="checkbox" v-model="f.selecionado" class="scale-150" />
+          <tr v-for="(funcionario, index) in funcionariosFiltrados" :key="index" class="hover:bg-gray-50 hover:dark:bg-gray-800">
+            <td class="border border-gray-300 dark:border-gray-600 p-2 text-center">
+              <input type="checkbox" v-model="funcionariosSelecionados" :value="funcionario" />
             </td>
-            <td class="border px-4 py-2">
-              <img
-                v-if="f.imagem"
-                :src="`http://localhost:8080${f.imagem}`"
-                alt="Foto do Funcionário"
-                class="w-16 h-16 object-cover rounded-full"
-              />
+            <td class="border border-gray-300 dark:border-gray-600 p-2 text-center">
+              <img :src="formatarURLImagem(funcionario.imagem)" alt="Foto" class="w-12 h-12 rounded-full object-cover" />
             </td>
-            <td class="border px-4 py-2">{{ f.nome }}</td>
-            <td class="border px-4 py-2">{{ f.cpf }}</td>
-            <td class="border px-4 py-2">{{ f.empresa }}</td>
-            <td class="border px-4 py-2">{{ f.funcao }}</td>
+            <td class="border border-gray-300 dark:border-gray-600 p-2">{{ funcionario.nome }}</td>
+            <td class="border border-gray-300 dark:border-gray-600 p-2">{{ funcionario.cpf }}</td>
+            <td class="border border-gray-300 dark:border-gray-600 p-2">{{ funcionario.empresa }}</td>
+            <td class="border border-gray-300 dark:border-gray-600 p-2">{{ funcionario.funcao }}</td>
           </tr>
         </tbody>
       </table>
-    </div>
-    <!-- Botões de Exportação (Abaixo da Tabela) -->
-    <div class="flex justify-end space-x-4 mt-4">
-      <button
-        @click="exportToPDF"
-        class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
-      >
-        Exportar para PDF
-      </button>
-      <button
-        @click="exportToExcel"
-        class="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all"
-      >
-        Exportar para Excel
-      </button>
-    </div>
+
+      <template #footer>
+        <div class="flex justify-end space-x-4">
+          <UButton @click="exportToPDF" color="primary">Exportar para PDF</UButton>
+          <UButton @click="exportToExcel" color="green">Exportar para Excel</UButton>
+        </div>
+      </template>
+    </UCard>
   </div>
 </template>

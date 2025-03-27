@@ -43,48 +43,54 @@ async function onSubmit(event: FormSubmitEvent<WorkSchema>) {
 </script>
 
 <template>
-    <div class="h-screen flex items-center justify-center bg-gray-100 p-6">
-        <UCard class="w-full sm:w-[600px] bg-white p-6 rounded-lg shadow-lg">
-            <h2 class="text-2xl font-semibold mb-6 text-center">Registro de Ponto</h2>
-            
-            <UForm :schema="workSchema" :state="workState" class="space-y-6" @submit="onSubmit">
+    <div class="grid justify-items-center">
+      <UCard class="w-full md:w-1/3">
+      <template #header>
+        <div class="flex justify-between items-center">
+          <h2 class="text-xl font-bold">Registro de Ponto</h2>
+        </div>
+      </template>
+      <UForm :schema="workSchema" :state="workState" class="space-y-4" @submit="onSubmit">
                 
                 <!-- Campo Empresa -->
                 <UFormGroup label="Empresa" name="company">
-                    <USelect v-model="workState.company" :options="companies" class="border p-2 rounded-lg" />
+                    <USelect v-model="workState.company" :options="companies" />
                 </UFormGroup>
 
                 <!-- Campo Funcionário -->
                 <UFormGroup label="Funcionário" name="employee">
-                    <USelect v-model="workState.employee" :options="employees" class="border p-2 rounded-lg" />
+                    <USelect v-model="workState.employee" :options="employees" />
                 </UFormGroup>
 
                 <!-- Campo Dia Trabalhado -->
                 <UFormGroup label="Dia Trabalhado" name="date">
-                    <UInput v-model="workState.date" type="date" class="border p-2 rounded-lg" />
+                    <UInput v-model="workState.date" type="date" />
                 </UFormGroup>
 
                 <!-- Campo Horário de Entrada -->
                 <UFormGroup label="Horário de Entrada" name="startTime">
-                    <UInput v-model="workState.startTime" type="time" class="border p-2 rounded-lg" />
+                    <UInput v-model="workState.startTime" type="time" />
                 </UFormGroup>
 
                 <!-- Campo Horário de Saída -->
                 <UFormGroup label="Horário de Saída" name="endTime">
-                    <UInput v-model="workState.endTime" type="time" class="border p-2 rounded-lg" />
+                    <UInput v-model="workState.endTime" type="time" />
                 </UFormGroup>
 
                 <!-- Campo Observações -->
                 <UFormGroup label="Observações" name="notes">
-                    <UTextarea v-model="workState.notes" class="border p-2 rounded-lg" />
+                    <UTextarea v-model="workState.notes" />
                 </UFormGroup>
 
                 <!-- Botão de Salvar Registro -->
-                <div class="flex justify-center">
-                    <UButton type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg mb-2 w-full hover:bg-blue-600 transition-all duration-300">Salvar Registro</UButton>
-                </div>
+                  <UButton 
+                    type="submit"
+                    label="Salvar registro"
+                    color="primary"
+                    block
+                  />
             </UForm>
-        </UCard>
+    </UCard>
     </div>
 </template>
 
