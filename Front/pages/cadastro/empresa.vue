@@ -86,12 +86,12 @@ const handleFileUpload = (event: Event) => {
                 </div>
 
                 <!-- Botão de Salvar Cadastro -->
-                <UButton 
-                    @click="salvarCadastro"
-                    label="Salvar"
-                    color="primary"
-                    block
-                />
+           <!-- <UButton <!-- Botão de Salvar Cadastro -->
+                    <!--@click="salvarCadastro" -->
+                  <!--  label="Salvar"-->
+                   <!-- color="primary"-->
+              <!--  block-->
+               <!-- />-->
             </div>
         </UCard>
     </div>

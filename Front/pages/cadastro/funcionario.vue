@@ -17,6 +17,8 @@ const funcionario = ref({
     fotoUrl: '' as string, // Armazena a URL da imagem após o upload
 });
 
+const toast = useToast()
+
 // Função para salvar o cadastro do funcionário
 const salvarCadastro = async () => {
     try {
@@ -32,14 +34,25 @@ const salvarCadastro = async () => {
 
         // Se houver uma foto, faz o upload
         if (funcionario.value.foto) {
-            const imageUrl = await uploadImagemFuncionario(data.id, funcionario.value.foto);
-            funcionario.value.fotoUrl = imageUrl; // Atualiza a URL da imagem
+            const response = await uploadImagemFuncionario(data.id, funcionario.value.foto);
+            funcionario.value.fotoUrl = response.data; // Atualiza a URL da imagem
         }
-
-        alert('Funcionário cadastrado com sucesso!');
+        toast.add({
+            id: 'cadastrado',
+            title: 'Funcionário cadastrado com sucesso!',
+            icon: 'i-heroicons-check-circle',
+            timeout: 6000,
+            color:"green",
+        })
     } catch (error) {
         console.error('Erro ao salvar:', error);
-        alert('Erro ao salvar os dados.');
+        toast.add({
+            id: 'erro',
+            title: 'Erro ao salvar',
+            icon: 'i-heroicons-x-circle',
+            timeout: 6000,
+            color:"red",
+        })
     }
 };
 
@@ -94,7 +107,7 @@ const handleFileUpload = (event: Event) => {
 
                 <!-- Campo Foto -->
                 <UFormGroup label="Foto" name="foto">
-                    <UInput type="file" @change="handleFileUpload" />
+                    <input type="file" id="foto" name="foto" accept="image/png, image/jpeg" @change="handleFileUpload"/>
                 </UFormGroup>
 
                 <!-- Exibe a imagem se já houver uma URL -->
