@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { cadastrarFuncionario, uploadImagemFuncionario } from '@/services/api';
+import { ref, onMounted } from 'vue';
+import { cadastrarFuncionario, uploadImagemFuncionario, listarEmpresas } from '@/services/api';
 
 useHead({
     title: 'Cadastro de Funcionário',
@@ -9,7 +9,7 @@ useHead({
 const funcionario = ref({
     nome: '',
     cpf: '',
-    empresa: '',
+    empresa: '', // Armazena o CNPJ da empresa selecionada
     cargaHoraria: '',
     funcao: '',
     email: '',
@@ -19,6 +19,20 @@ const funcionario = ref({
 
 const toast = useToast()
 
+const empresas = ref<any[]>([]); // Lista de empresas
+
+// Carrega as empresas do backend
+const fetchEmpresas = async () => {
+    try {
+        const response = await listarEmpresas();
+        empresas.value = response.data;
+    } catch (error) {
+        console.error('Erro ao carregar as empresas:', error);
+    }
+};
+
+onMounted(fetchEmpresas);
+
 // Função para salvar o cadastro do funcionário
 const salvarCadastro = async () => {
     try {
@@ -26,17 +40,11 @@ const salvarCadastro = async () => {
         const { data } = await cadastrarFuncionario({
             nome: funcionario.value.nome,
             cpf: funcionario.value.cpf,
-            empresa: funcionario.value.empresa,
+            empresa: funcionario.value.empresa, // Envia o CNPJ da empresa
             cargaHoraria: funcionario.value.cargaHoraria,
             funcao: funcionario.value.funcao,
             email: funcionario.value.email,
         });
-
-        // Se houver uma foto, faz o upload
-        if (funcionario.value.foto) {
-            const response = await uploadImagemFuncionario(data.id, funcionario.value.foto);
-            funcionario.value.fotoUrl = response.data; // Atualiza a URL da imagem
-        }
         toast.add({
             id: 'cadastrado',
             title: 'Funcionário cadastrado com sucesso!',
@@ -44,15 +52,16 @@ const salvarCadastro = async () => {
             timeout: 6000,
             color:"green",
         })
+
+        // Se houver uma foto, faz o upload
+        if (funcionario.value.foto) {
+            const response = await uploadImagemFuncionario(data.id, funcionario.value.foto);
+            funcionario.value.fotoUrl = response.data; // Atualiza a URL da imagem
+        }
+
     } catch (error) {
         console.error('Erro ao salvar:', error);
-        toast.add({
-            id: 'erro',
-            title: 'Erro ao salvar',
-            icon: 'i-heroicons-x-circle',
-            timeout: 6000,
-            color:"red",
-        })
+        alert('Erro ao salvar os dados.');
     }
 };
 
@@ -87,7 +96,11 @@ const handleFileUpload = (event: Event) => {
 
                 <!-- Campo Empresa -->
                 <UFormGroup label="Empresa" name="empresa">
-                    <UInput v-model="funcionario.empresa" type="text" />
+                    <USelect
+                        v-model="funcionario.empresa"
+                        :options="empresas.map(emp => ({ value: emp.cnpj, label: emp.nome }))"
+                        placeholder="Selecione uma empresa"
+                    />
                 </UFormGroup>
 
                 <!-- Campo Carga Horária -->
@@ -107,7 +120,7 @@ const handleFileUpload = (event: Event) => {
 
                 <!-- Campo Foto -->
                 <UFormGroup label="Foto" name="foto">
-                    <input type="file" id="foto" name="foto" accept="image/png, image/jpeg" @change="handleFileUpload"/>
+                    <input type="file" accept="image/png, image/jpeg" @change="handleFileUpload" />
                 </UFormGroup>
 
                 <!-- Exibe a imagem se já houver uma URL -->
@@ -126,9 +139,3 @@ const handleFileUpload = (event: Event) => {
         </UCard>
     </div>
 </template>
-
-<style scoped>
-.bg-lightblue-500 {
-    background-color: #63b3ed;
-}
-</style>

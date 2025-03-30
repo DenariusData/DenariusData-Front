@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-//import { cadastrarEmpresa, uploadImagemEmpresa } from '@/services/api';
+import { cadastrarEmpresa } from '@/services/api';
 
 useHead({
     title: 'Cadastro de Empresa',
@@ -10,42 +10,22 @@ const empresa = ref({
     nome: '',
     cnpj: '',
     endereço: '',
-    foto: null as File | null, // Armazena o arquivo de imagem
-    fotoUrl: '' as string, // Armazena a URL da imagem após o upload
 });
 
-// Função para salvar o cadastro do funcionário
-//const salvarCadastro = async () => {
-   // try {
-        // Cadastra o funcionário no backend
-      //  const { data } = await cadastrarFuncionario({
-          // nome: funcionario.value.nome,
-           // cpf: funcionario.value.cpf,
-          //  empresa: funcionario.value.empresa,
-          //  cargaHoraria: funcionario.value.cargaHoraria,
-         //   funcao: funcionario.value.funcao,
-        //    email: funcionario.value.email,
-      //  });
+// Função para salvar o cadastro da empresa
+const salvarCadastro = async () => {
+    try {
+        // Envia os dados da empresa para o backend
+        await cadastrarEmpresa({
+            nome: empresa.value.nome,
+            cnpj: empresa.value.cnpj,
+            endereco: empresa.value.endereço, // Ajuste para o campo correto no backend
+        });
 
-        // Se houver uma foto, faz o upload
-      //  if (funcionario.value.foto) {
-        //    const imageUrl = await uploadImagemFuncionario(data.id, funcionario.value.foto);
-          //  funcionario.value.fotoUrl = imageUrl; // Atualiza a URL da imagem
-       // }
-
-   //     alert('Funcionário cadastrado com sucesso!');
-  //  } catch (error) {
-   //     console.error('Erro ao salvar:', error);
-   //     alert('Erro ao salvar os dados.');
-   // }
-//};
-
-// Função para lidar com o upload de arquivos
-const handleFileUpload = (event: Event) => {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-        empresa.value.foto = input.files[0]; // Armazena o arquivo selecionado
-        empresa.value.fotoUrl = URL.createObjectURL(input.files[0]); // Gera uma URL temporária para visualização
+        alert('Empresa cadastrada com sucesso!');
+    } catch (error) {
+        console.error('Erro ao salvar:', error);
+        alert('Erro ao salvar os dados da empresa.');
     }
 };
 </script>
@@ -64,34 +44,23 @@ const handleFileUpload = (event: Event) => {
                     <UInput v-model="empresa.nome" type="text" />
                 </UFormGroup>
 
-                <!-- Campo cnpj -->
+                <!-- Campo CNPJ -->
                 <UFormGroup label="CNPJ" name="cnpj">
                     <UInput v-model="empresa.cnpj" type="text" />
                 </UFormGroup>
 
-                <!-- Campo Empresa -->
+                <!-- Campo Endereço -->
                 <UFormGroup label="Endereço" name="endereço">
                     <UInput v-model="empresa.endereço" type="text" />
                 </UFormGroup>
 
-
-                <!-- Campo Foto -->
-                <UFormGroup label="Foto" name="foto">
-                    <UInput type="file" @change="handleFileUpload" />
-                </UFormGroup>
-
-                <!-- Exibe a imagem se já houver uma URL -->
-                <div v-if="empresa.fotoUrl" class="flex justify-center">
-                    <img :src="empresa.fotoUrl" alt="Foto do Funcionário" class="w-32 h-32 object-cover rounded-full" />
-                </div>
-
                 <!-- Botão de Salvar Cadastro -->
-           <!-- <UButton <!-- Botão de Salvar Cadastro -->
-                    <!--@click="salvarCadastro" -->
-                  <!--  label="Salvar"-->
-                   <!-- color="primary"-->
-              <!--  block-->
-               <!-- />-->
+                <UButton
+                    @click="salvarCadastro"
+                    label="Salvar"
+                    color="primary"
+                    block
+                />
             </div>
         </UCard>
     </div>

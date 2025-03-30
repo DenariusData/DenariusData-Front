@@ -7,10 +7,21 @@ const api = axios.create({
   },
 });
 
+// Criar empresa
+export const cadastrarEmpresa = async(dados: any) => {
+  return await api.post('/empresa', dados);
+};
+
+// Listar todas as empresas
+export const listarEmpresas = async () => {
+  return await api.get('/empresa');
+};
+
 // Criar funcionário
 export const cadastrarFuncionario = async (dados: any) => {
   return await api.post('/funcionarios', dados);
 };
+
 
 // Upload de imagem do funcionário
 export const uploadImagemFuncionario = async (id: number, file: File) => {
