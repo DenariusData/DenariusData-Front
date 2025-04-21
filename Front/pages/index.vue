@@ -1,6 +1,174 @@
-<script setup lang="ts">
-useHead({                  
-    title: 'Home',
-})
+<script setup>
+import { ref, onMounted, watch } from "vue";
+import { Chart, registerables } from "chart.js";
+Chart.register(...registerables);
 
+// Referências dos canvas
+const pieChart = ref(null);
+const lineChart = ref(null);
+const barChart = ref(null);
+
+// Filtros
+const empresas = ref(["Empresa A", "Empresa B", "Empresa C"]);
+const funcionariosPorEmpresa = {
+  "Empresa A": ["João", "Maria"],
+  "Empresa B": ["Carlos", "Ana"],
+  "Empresa C": ["Pedro", "Julia"]
+};
+const empresaSelecionada = ref("");
+const funcionarioSelecionado = ref("");
+const funcionariosFiltrados = ref([]);
+
+// Atualiza lista de funcionários ao mudar empresa
+watch(empresaSelecionada, () => {
+  funcionarioSelecionado.value = "";
+  funcionariosFiltrados.value = funcionariosPorEmpresa[empresaSelecionada.value] || [];
+});
+
+// Atualiza gráfico de barras com base no filtro
+const atualizarGraficoFiltrado = () => {
+  if (!barChart.value) return;
+  const chartInstance = Chart.getChart(barChart.value);
+  if (chartInstance) chartInstance.destroy();
+
+  new Chart(barChart.value, {
+    type: "bar",
+    data: {
+      labels: [funcionarioSelecionado.value],
+      datasets: [
+        {
+          label: "Horas por Profissional",
+          data: [Math.floor(Math.random() * 10)],
+          backgroundColor: "rgba(54, 162, 235, 0.5)",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+    },
+  });
+};
+
+onMounted(() => {
+  // Pizza: Empresas cadastradas
+  new Chart(pieChart.value, {
+    type: "pie",
+    data: {
+      labels: ["Empresa A", "Empresa B", "Empresa C", "Empresa D"],
+      datasets: [
+        {
+          label: "Empresas Cadastradas",
+          data: [10, 20, 15, 30],
+          backgroundColor: [
+            "rgba(255, 99, 132, 0.5)",
+            "rgba(54, 162, 235, 0.5)",
+            "rgba(255, 206, 86, 0.5)",
+            "rgba(75, 192, 192, 0.5)"
+          ]
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+    }
+  });
+
+  // Linha: Profissionais por dia
+  new Chart(lineChart.value, {
+    type: "line",
+    data: {
+      labels: ["Seg", "Ter", "Qua", "Qui", "Sex"],
+      datasets: [
+        {
+          label: "Profissionais por Dia",
+          data: [10, 12, 8, 15, 9],
+          fill: false,
+          borderColor: "rgba(54, 162, 235, 1)",
+          backgroundColor: "rgba(54, 162, 235, 0.5)",
+          tension: 0.3,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+    }
+  });
+});
 </script>
+
+<template>
+  <div class="charts-wrapper">
+    <div class="chart-container">
+      <h2>Empresas Cadastradas</h2>
+      <canvas ref="pieChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+      <h2>Profissionais por Dia</h2>
+      <canvas ref="lineChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+      <h2>Horas por Profissional</h2>
+      <div class="filters">
+        <select v-model="empresaSelecionada">
+          <option disabled value="">Selecione uma empresa</option>
+          <option v-for="empresa in empresas" :key="empresa">{{ empresa }}</option>
+        </select>
+
+        <select v-model="funcionarioSelecionado" :disabled="!empresaSelecionada">
+          <option disabled value="">Selecione um funcionário</option>
+          <option v-for="func in funcionariosFiltrados" :key="func">{{ func }}</option>
+        </select>
+
+        <button @click="atualizarGraficoFiltrado">Filtrar</button>
+      </div>
+      <canvas ref="barChart"></canvas>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.charts-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.chart-container {
+  width: 40%;
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f9f9f9;
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+select, button {
+  padding: 0.3rem 0.6rem;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+button {
+  background-color: #3b82f6;
+  color: white;
+  cursor: pointer;
+}
+</style>
