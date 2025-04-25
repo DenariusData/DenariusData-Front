@@ -31,14 +31,26 @@ const atualizarGraficoFiltrado = () => {
   const chartInstance = Chart.getChart(barChart.value);
   if (chartInstance) chartInstance.destroy();
 
+  const funcionariosData = empresaSelecionada.value
+    ? funcionariosPorEmpresa[empresaSelecionada.value]
+    : [];
+  
+  const labels = funcionarioSelecionado.value
+    ? [funcionarioSelecionado.value]  // Se funcionário for selecionado, mostra só ele
+    : funcionariosData;               // Se não, mostra todos os funcionários da empresa
+
+  const data = funcionarioSelecionado.value
+    ? [Math.floor(Math.random() * 10)]  // Dado aleatório para o funcionário selecionado
+    : funcionariosData.map(() => Math.floor(Math.random() * 10));  // Dados aleatórios para todos os funcionários
+
   new Chart(barChart.value, {
     type: "bar",
     data: {
-      labels: [funcionarioSelecionado.value],
+      labels: labels,
       datasets: [
         {
           label: "Horas por Profissional",
-          data: [Math.floor(Math.random() * 10)],
+          data: data,
           backgroundColor: "rgba(54, 162, 235, 0.5)",
         },
       ],
@@ -51,14 +63,14 @@ const atualizarGraficoFiltrado = () => {
 };
 
 onMounted(() => {
-  // Pizza: Empresas cadastradas
+  // Pizza: Funcionarios por empresas cadastradas
   new Chart(pieChart.value, {
     type: "pie",
     data: {
       labels: ["Empresa A", "Empresa B", "Empresa C", "Empresa D"],
       datasets: [
         {
-          label: "Empresas Cadastradas",
+          label: "Funcionários",
           data: [10, 20, 15, 30],
           backgroundColor: [
             "rgba(255, 99, 132, 0.5)",
@@ -102,12 +114,12 @@ onMounted(() => {
 <template>
   <div class="charts-wrapper">
     <div class="chart-container">
-      <h2>Empresas Cadastradas</h2>
+      <h2>Funcionários por Empresa</h2>
       <canvas ref="pieChart"></canvas>
     </div>
 
     <div class="chart-container">
-      <h2>Profissionais por Dia</h2>
+      <h2>Registros de Profissionais por Dia</h2>
       <canvas ref="lineChart"></canvas>
     </div>
 

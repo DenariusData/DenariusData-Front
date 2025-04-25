@@ -16,9 +16,7 @@ const empresa = ref({
   id: null,
   nome: '',
   cnpj: '',
-  endereco: '',
-  foto: null as File | null,
-  fotoUrl: ''
+  endereco: ''
 })
 
 const options = [
@@ -34,7 +32,7 @@ const fecharModal = () => {
   modalAberto.value = false
   empresa.value = {
     id: null,
-    nome: '', cnpj: '', endereco: '', foto: null, fotoUrl: ''
+    nome: '', cnpj: '', endereco: ''
   }
 }
 
@@ -43,19 +41,17 @@ const editarEmpresa = (e: any) => {
     id: e.id,
     nome: e.nome || '',
     cnpj: e.cnpj || '',
-    endereco: e.endereco || '',
-    foto: null,
-    fotoUrl: formatarURLImagem(e.imagem)
+    endereco: e.endereco || ''
   }
   abrirModal()
 }
 
 const fetchEmpresas = async () => {
   try {
-    const response = await axios.get('http://localhost:8080/api/empresas')
+    const response = await axios.get('http://localhost:8080/api/empresa')
     empresas.value = response.data
   } catch (error) {
-    console.error('Erro ao carregar empresas:', error)
+    console.error('Erro ao carregar empresa:', error)
   }
 }
 onMounted(fetchEmpresas)
@@ -68,19 +64,10 @@ const salvarCadastro = async () => {
       endereco: empresa.value.endereco
     }
 
-    let response
     if (empresa.value.id) {
-      response = await axios.put(`http://localhost:8080/api/empresas/${empresa.value.id}`, payload)
+      await axios.put(`http://localhost:8080/api/empresa/${empresa.value.id}`, payload)
     } else {
-      response = await axios.post('http://localhost:8080/api/empresas', payload)
-    }
-
-    const empresaId = response.data.id
-
-    if (empresa.value.foto) {
-      const formData = new FormData()
-      formData.append('imagem', empresa.value.foto)
-      await axios.post(`http://localhost:8080/api/empresas/${empresaId}/upload-imagem`, formData)
+      await axios.post('http://localhost:8080/api/empresa', payload)
     }
 
     toast.add({
@@ -103,19 +90,6 @@ const salvarCadastro = async () => {
       color: 'red'
     })
   }
-}
-
-const handleFileUpload = (event: Event) => {
-  const input = event.target as HTMLInputElement
-  if (input.files && input.files.length > 0) {
-    empresa.value.foto = input.files[0]
-    empresa.value.fotoUrl = URL.createObjectURL(input.files[0])
-  }
-}
-
-const formatarURLImagem = (caminhoRelativo: string) => {
-  if (!caminhoRelativo) return ''
-  return `http://localhost:8080${caminhoRelativo}`
 }
 
 const empresasFiltradas = computed(() => {
@@ -160,7 +134,6 @@ const items = computed(() => empresasFiltradas.value)
       <table class="w-full border-collapse border border-gray-300 dark:border-gray-600 mt-4">
         <thead>
           <tr class="bg-gray-100 dark:bg-gray-800">
-            <th>Logo</th>
             <th>Nome</th>
             <th>CNPJ</th>
             <th>Endereço</th>
@@ -169,7 +142,6 @@ const items = computed(() => empresasFiltradas.value)
         </thead>
         <tbody>
           <tr v-for="(empresa, index) in empresasPaginadas" :key="index" class="hover:bg-gray-50 dark:hover:bg-gray-800">
-            <td class="text-center"><img :src="formatarURLImagem(empresa.imagem)" class="w-12 h-12 object-cover rounded-full" /></td>
             <td>{{ empresa.nome }}</td>
             <td>{{ empresa.cnpj }}</td>
             <td>{{ empresa.endereco }}</td>
@@ -194,12 +166,6 @@ const items = computed(() => empresasFiltradas.value)
           <UFormGroup label="Nome"><UInput v-model="empresa.nome" /></UFormGroup>
           <UFormGroup label="CNPJ"><UInput v-model="empresa.cnpj" /></UFormGroup>
           <UFormGroup label="Endereço"><UInput v-model="empresa.endereco" /></UFormGroup>
-          <UFormGroup label="Logo">
-            <input type="file" @change="handleFileUpload" accept="image/png, image/jpeg" />
-            <div v-if="empresa.fotoUrl" class="flex justify-center mt-2">
-              <img :src="empresa.fotoUrl" class="w-24 h-24 rounded-full object-cover" />
-            </div>
-          </UFormGroup>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">

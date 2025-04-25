@@ -11,7 +11,7 @@ const funcionariosSelecionados = ref<any[]>([]);
 const termoPesquisa = ref('');
 const filtroSelecionado = ref('nome');
 const currentPage = ref(1);
-const pageSize = 5;
+const pageSize = 10;
 
 const options = [
   { value: 'nome', label: 'Nome' },
@@ -23,6 +23,7 @@ const options = [
 // Cadastro modal
 const modalAberto = ref(false);
 const funcionario = ref({
+  id: null,
   nome: '',
   cpf: '',
   empresa: '',
@@ -41,12 +42,22 @@ const abrirModal = () => {
 const fecharModal = () => {
   modalAberto.value = false;
   funcionario.value = {
-    nome: '', cpf: '', empresa: '', cargaHoraria: '', funcao: '', email: '', foto: null, fotoUrl: ''
+    id: null,
+    nome: '',
+    cpf: '',
+    empresa: '',
+    cargaHoraria: '',
+    funcao: '',
+    email: '',
+    foto: null,
+    fotoUrl: ''
   };
 };
 
+
 const editarFuncionario = (f: any) => {
   funcionario.value = {
+    id: f.id,
     nome: f.nome || '',
     cpf: f.cpf || '',
     empresa: f.empresa || '',
@@ -58,6 +69,7 @@ const editarFuncionario = (f: any) => {
   };
   modalAberto.value = true;
 };
+
 
 const fetchFuncionarios = async () => {
   try {
@@ -76,23 +88,37 @@ const formatarURLImagem = (caminhoRelativo: string) => {
 
 const salvarCadastro = async () => {
   try {
-    const { data } = await cadastrarFuncionario({
-      nome: funcionario.value.nome,
-      cpf: funcionario.value.cpf,
-      empresa: funcionario.value.empresa,
-      cargaHoraria: funcionario.value.cargaHoraria,
-      funcao: funcionario.value.funcao,
-      email: funcionario.value.email,
-    });
+    let response;
+
+    if (funcionario.value.id) {
+      response = await axios.put(`http://localhost:8080/api/funcionarios/${funcionario.value.id}`, {
+        nome: funcionario.value.nome,
+        cpf: funcionario.value.cpf,
+        empresa: funcionario.value.empresa,
+        cargaHoraria: funcionario.value.cargaHoraria,
+        funcao: funcionario.value.funcao,
+        email: funcionario.value.email,
+      });
+    } else {
+      response = await cadastrarFuncionario({
+        nome: funcionario.value.nome,
+        cpf: funcionario.value.cpf,
+        empresa: funcionario.value.empresa,
+        cargaHoraria: funcionario.value.cargaHoraria,
+        funcao: funcionario.value.funcao,
+        email: funcionario.value.email,
+      });
+    }
+
+    const funcionarioId = funcionario.value.id || response.data.id;
 
     if (funcionario.value.foto) {
-      const response = await uploadImagemFuncionario(data.id, funcionario.value.foto);
-      funcionario.value.fotoUrl = response.data;
+      await uploadImagemFuncionario(funcionarioId, funcionario.value.foto);
     }
 
     toast.add({
-      id: 'cadastrado',
-      title: 'Funcionário cadastrado com sucesso!',
+      id: 'sucesso',
+      title: funcionario.value.id ? 'Funcionário atualizado com sucesso!' : 'Funcionário cadastrado com sucesso!',
       icon: 'i-heroicons-check-circle',
       timeout: 6000,
       color: 'green'
@@ -111,6 +137,7 @@ const salvarCadastro = async () => {
     });
   }
 };
+
 
 const handleFileUpload = (event: Event) => {
   const input = event.target as HTMLInputElement;
