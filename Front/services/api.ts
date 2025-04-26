@@ -1,36 +1,65 @@
-import axios from 'axios';
+import axios, { type AxiosResponse } from 'axios'
+
+// Tipos das entidades
+export interface Empresa {
+  id: number
+  nome: string
+  cnpj: string
+}
+
+export interface Funcionario {
+  id: number
+  nome: string
+}
+
+export interface RegistroPonto {
+  empresa: string // CNPJ da empresa
+  funcionario: { id: number }
+  diaTrabalhado: string // Ex: "2025-04-25"
+  horarioEntrada: string // Ex: "08:00"
+  horarioSaida: string // Ex: "17:00"
+  observacoes?: string
+}
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080/api', // Ajuste para o seu backend
+  baseURL: 'http://localhost:8080/api',
   headers: {
     'Content-Type': 'application/json',
   },
-});
+})
 
-// Criar empresa
-export const cadastrarEmpresa = async(dados: any) => {
-  return await api.post('/empresa', dados);
-};
+// Empresa
+export const cadastrarEmpresa = async (dados: Empresa): Promise<AxiosResponse<Empresa>> => {
+  return await api.post('/empresa', dados)
+}
 
-// Listar todas as empresas
-export const listarEmpresas = async () => {
-  return await api.get('/empresa');
-};
+export const listarEmpresas = async (): Promise<AxiosResponse<Empresa[]>> => {
+  return await api.get('/empresa')
+}
 
-// Criar funcionário
-export const cadastrarFuncionario = async (dados: any) => {
-  return await api.post('/funcionarios', dados);
-};
+// Funcionário
+export const cadastrarFuncionario = async (dados: Funcionario): Promise<AxiosResponse<Funcionario>> => {
+  return await api.post('/funcionarios', dados)
+}
 
+export const listarFuncionarios = async (): Promise<AxiosResponse<Funcionario[]>> => {
+  return await api.get('/funcionarios')
+}
 
-// Upload de imagem do funcionário
-export const uploadImagemFuncionario = async (id: number, file: File) => {
-  const formData = new FormData();
-  formData.append('file', file);
+export const uploadImagemFuncionario = async (id: number, file: File): Promise<AxiosResponse> => {
+  const formData = new FormData()
+  formData.append('file', file)
 
   return await api.post(`/funcionarios/${id}/imagem`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
-  });
-};
+  })
+}
 
-export default api;
+// Registro de Ponto
+export const cadastrarRegistroDePonto = async (
+  dados: RegistroPonto
+): Promise<AxiosResponse<RegistroPonto>> => {
+  return await api.post('/registro', dados)
+}
+
+export default api
