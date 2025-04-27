@@ -1,10 +1,10 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
+// nuxt.config.ts
 export default defineNuxtConfig({
-  compatibilityDate: '2024-11-01',
+  compatibilityDate: '2025-04-26',
   devtools: { enabled: true },
   modules: ['@nuxt/ui', '@nuxt/icon'],
   colorMode: {
-    preference: 'light'
+    preference: 'light',
   },
   components: [
     {
@@ -12,4 +12,6 @@ export default defineNuxtConfig({
       pathPrefix: false,
     },
   ],
-})
+  router: {
+  },
+});

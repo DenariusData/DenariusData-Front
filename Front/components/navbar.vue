@@ -11,6 +11,12 @@ const textColor = 'text-black'
 
 // Define a cor da linha ao passar o mouse
 const hoverLineColor = 'bg-black'
+
+// Função de logout
+function logout() {
+  localStorage.removeItem('authToken')
+  navigateTo('/login')
+}
 </script>
 
 <template>
@@ -21,12 +27,12 @@ const hoverLineColor = 'bg-black'
     @mouseleave="isHovered = false"
   >
     <img 
-      src='/logo.svg'
+      src="/logo.svg"
       alt="Logo" 
       class="h-12 transition-all duration-300" 
       :class="{ 'h-16': isHovered }"
     />
-    
+
     <nav class="mt-4 w-full">
       <ul class="space-y-4">
         <li v-for="item in routes" :key="item.to">
@@ -51,7 +57,18 @@ const hoverLineColor = 'bg-black'
         </li>
       </ul>
     </nav>
-    
-    <buttonTheme />
+
+    <!-- Parte inferior (botão de tema + logout) -->
+    <div class="flex flex-col items-center space-y-2 mt-6">
+      <buttonTheme />
+      <button 
+        @click="logout"
+        class="flex items-center p-2 rounded-lg transition-all duration-300 text-black hover:bg-blue-300"
+      >
+        <span class="text-xl mr-2">⏻</span>
+        <span v-if="isHovered" class="transition-all duration-300">Sair</span>
+      </button>
+    </div>
+
   </aside>
 </template>

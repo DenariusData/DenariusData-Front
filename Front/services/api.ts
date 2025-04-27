@@ -55,6 +55,11 @@ export const uploadImagemFuncionario = async (id: number, file: File): Promise<A
   })
 }
 
+// Funcionário por empresa (novo)
+export const getFuncionariosPorEmpresa = async (): Promise<AxiosResponse<Record<string, string[]>>> => {
+  return await api.get('/funcionarios/por-empresa')
+}
+
 // Registro de Ponto
 export const cadastrarRegistroDePonto = async (
   dados: RegistroPonto

@@ -1,6 +1,10 @@
 <script setup>
+definePageMeta({
+  middleware: 'auth',
+})
 import { ref, onMounted, watch } from "vue";
 import { Chart, registerables } from "chart.js";
+import { getFuncionariosPorEmpresa } from "@/services/api"; // ajuste o caminho conforme seu projeto
 Chart.register(...registerables);
 
 // Referências dos canvas
@@ -9,12 +13,8 @@ const lineChart = ref(null);
 const barChart = ref(null);
 
 // Filtros
-const empresas = ref(["Empresa A", "Empresa B", "Empresa C"]);
-const funcionariosPorEmpresa = {
-  "Empresa A": ["João", "Maria"],
-  "Empresa B": ["Carlos", "Ana"],
-  "Empresa C": ["Pedro", "Julia"]
-};
+const empresas = ref([]);
+const funcionariosPorEmpresa = ref({});
 const empresaSelecionada = ref("");
 const funcionarioSelecionado = ref("");
 const funcionariosFiltrados = ref([]);
@@ -22,7 +22,7 @@ const funcionariosFiltrados = ref([]);
 // Atualiza lista de funcionários ao mudar empresa
 watch(empresaSelecionada, () => {
   funcionarioSelecionado.value = "";
-  funcionariosFiltrados.value = funcionariosPorEmpresa[empresaSelecionada.value] || [];
+  funcionariosFiltrados.value = funcionariosPorEmpresa.value[empresaSelecionada.value] || [];
 });
 
 // Atualiza gráfico de barras com base no filtro
@@ -32,7 +32,7 @@ const atualizarGraficoFiltrado = () => {
   if (chartInstance) chartInstance.destroy();
 
   const funcionariosData = empresaSelecionada.value
-    ? funcionariosPorEmpresa[empresaSelecionada.value]
+    ? funcionariosPorEmpresa.value[empresaSelecionada.value]
     : [];
   
   const labels = funcionarioSelecionado.value
@@ -62,32 +62,53 @@ const atualizarGraficoFiltrado = () => {
   });
 };
 
-onMounted(() => {
-  // Pizza: Funcionarios por empresas cadastradas
-  new Chart(pieChart.value, {
-    type: "pie",
-    data: {
-      labels: ["Empresa A", "Empresa B", "Empresa C", "Empresa D"],
-      datasets: [
-        {
-          label: "Funcionários",
-          data: [10, 20, 15, 30],
-          backgroundColor: [
-            "rgba(255, 99, 132, 0.5)",
-            "rgba(54, 162, 235, 0.5)",
-            "rgba(255, 206, 86, 0.5)",
-            "rgba(75, 192, 192, 0.5)"
-          ]
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-    }
-  });
+// Função nova: carregar Funcionários por Empresa
+const carregarFuncionariosPorEmpresa = async () => {
+  try {
+    const response = await getFuncionariosPorEmpresa();
+    const dados = response.data;
 
-  // Linha: Profissionais por dia
+    empresas.value = Object.keys(dados);
+    funcionariosPorEmpresa.value = dados;
+
+    if (pieChart.value) {
+      const chartInstance = Chart.getChart(pieChart.value);
+      if (chartInstance) chartInstance.destroy();
+    }
+
+    new Chart(pieChart.value, {
+      type: "pie",
+      data: {
+        labels: empresas.value,
+        datasets: [
+          {
+            label: "Funcionários",
+            data: Object.values(dados),
+            backgroundColor: [
+              "rgba(255, 99, 132, 0.5)",
+              "rgba(54, 162, 235, 0.5)",
+              "rgba(255, 206, 86, 0.5)",
+              "rgba(75, 192, 192, 0.5)",
+              "rgba(153, 102, 255, 0.5)",
+              "rgba(255, 159, 64, 0.5)"
+            ]
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+      }
+    });
+  } catch (error) {
+    console.error("Erro ao carregar funcionários por empresa:", error);
+  }
+};
+
+onMounted(() => {
+  carregarFuncionariosPorEmpresa(); // Chama API para montar o gráfico dinâmico
+
+  // Linha: Profissionais por dia (mantido como estava)
   new Chart(lineChart.value, {
     type: "line",
     data: {
@@ -110,7 +131,6 @@ onMounted(() => {
   });
 });
 </script>
-
 <template>
   <div class="charts-wrapper">
     <div class="chart-container">

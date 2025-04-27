@@ -1,6 +1,5 @@
-<template dir="routing/pages" :nav="routes" current-route>
+<template>
   <NuxtLayout>
     <NuxtPage />
-    <UNotifications />
   </NuxtLayout>
 </template>
