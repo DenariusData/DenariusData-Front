@@ -54,7 +54,6 @@ const fecharModal = () => {
   };
 };
 
-
 const editarFuncionario = (f: any) => {
   funcionario.value = {
     id: f.id,
@@ -69,7 +68,6 @@ const editarFuncionario = (f: any) => {
   };
   modalAberto.value = true;
 };
-
 
 const fetchFuncionarios = async () => {
   try {
@@ -138,7 +136,6 @@ const salvarCadastro = async () => {
   }
 };
 
-
 const handleFileUpload = (event: Event) => {
   const input = event.target as HTMLInputElement;
   if (input.files && input.files.length > 0) {
@@ -197,6 +194,47 @@ const exportToPDF = () => {
   doc.save('relatorio_funcionarios.pdf');
 };
 
+// Nova modal de confirmação para deletar
+const modalConfirmacaoAberta = ref(false);
+const funcionarioParaDeletar = ref<any>(null);
+
+const abrirModalConfirmacao = (f: any) => {
+  funcionarioParaDeletar.value = f;
+  modalConfirmacaoAberta.value = true;
+};
+
+const cancelarDelecao = () => {
+  funcionarioParaDeletar.value = null;
+  modalConfirmacaoAberta.value = false;
+};
+
+const confirmarDelecao = async () => {
+  if (!funcionarioParaDeletar.value) return;
+  try {
+    await axios.delete(`http://localhost:8080/api/funcionarios/${funcionarioParaDeletar.value.id}`);
+    toast.add({
+      title: 'Funcionário deletado com sucesso!',
+      icon: 'i-heroicons-check-circle',
+      color: 'green'
+    });
+    modalConfirmacaoAberta.value = false;
+    funcionarioParaDeletar.value = null;
+    fetchFuncionarios();
+  } catch (error) {
+    console.error('Erro ao deletar funcionário:', error);
+    toast.add({
+      title: 'Erro ao deletar funcionário',
+      icon: 'i-heroicons-x-circle',
+      color: 'red'
+    });
+  }
+};
+
+// Substituir o método deletarFuncionario para abrir a modal
+const deletarFuncionario = (f: any) => {
+  abrirModalConfirmacao(f);
+};
+
 const page = currentPage;
 const items = computed(() => funcionariosFiltrados.value);
 </script>
@@ -243,8 +281,9 @@ const items = computed(() => funcionariosFiltrados.value);
             <td>{{ funcionario.cpf }}</td>
             <td>{{ funcionario.empresa }}</td>
             <td>{{ funcionario.funcao }}</td>
-            <td class="text-center">
+            <td class="text-center flex gap-2 justify-center">
               <UButton icon="heroicons:pencil-square" color="primary" variant="ghost" @click="editarFuncionario(funcionario)" />
+              <UButton icon="heroicons:trash" color="red" variant="ghost" @click="deletarFuncionario(funcionario)" />
             </td>
           </tr>
         </tbody>
@@ -289,5 +328,27 @@ const items = computed(() => funcionariosFiltrados.value);
         </template>
       </UCard>
     </UModal>
+
+    <!-- Modal de confirmação -->
+    <UModal v-model="modalConfirmacaoAberta">
+      <UCard class="max-w-sm mx-auto p-4">
+        <template #header>
+          <h2 class="text-lg font-bold">Confirmação</h2>
+        </template>
+        <div>
+          <p>Tem certeza que deseja deletar o funcionário <strong>{{ funcionarioParaDeletar?.nome }}</strong>?</p>
+        </div>
+        <template #footer>
+          <div class="flex justify-end gap-2 mt-4">
+            <UButton color="gray" @click="cancelarDelecao">Cancelar</UButton>
+            <UButton color="red" @click="confirmarDelecao">Deletar</UButton>
+          </div>
+        </template>
+      </UCard>
+    </UModal>
   </div>
 </template>
+
+<style scoped>
+/* Você pode ajustar estilos das modais aqui */
+</style>

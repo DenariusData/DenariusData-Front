@@ -19,6 +19,10 @@ const empresa = ref({
   endereco: ''
 })
 
+// Modal de confirmação de exclusão
+const confirmarExclusaoAberto = ref(false)
+const empresaParaExcluir = ref<any>(null)
+
 const options = [
   { value: 'nome', label: 'Nome' },
   { value: 'cnpj', label: 'CNPJ' }
@@ -46,6 +50,49 @@ const editarEmpresa = (e: any) => {
   abrirModal()
 }
 
+// Abre o modal de confirmação
+const abrirConfirmacaoExclusao = (e: any) => {
+  empresaParaExcluir.value = e
+  confirmarExclusaoAberto.value = true
+}
+
+// Cancela exclusão
+const cancelarExclusao = () => {
+  empresaParaExcluir.value = null
+  confirmarExclusaoAberto.value = false
+}
+
+// Confirma e deleta
+const confirmarExclusao = async () => {
+  if (!empresaParaExcluir.value) return
+  await deletarEmpresa(empresaParaExcluir.value)
+  confirmarExclusaoAberto.value = false
+  empresaParaExcluir.value = null
+}
+
+const deletarEmpresa = async (empresa: any) => {
+  try {
+    await axios.delete(`http://localhost:8080/api/empresa/${empresa.cnpj}`)
+    toast.add({
+      id: 'sucesso-delete',
+      title: 'Empresa deletada com sucesso!',
+      icon: 'i-heroicons-trash',
+      timeout: 5000,
+      color: 'green'
+    })
+    fetchEmpresas()
+  } catch (error) {
+    console.error('Erro ao deletar empresa:', error)
+    toast.add({
+      id: 'erro-delete',
+      title: 'Erro ao deletar empresa',
+      icon: 'i-heroicons-x-circle',
+      timeout: 6000,
+      color: 'red'
+    })
+  }
+}
+
 const fetchEmpresas = async () => {
   try {
     const response = await axios.get('http://localhost:8080/api/empresa')
@@ -65,7 +112,7 @@ const salvarCadastro = async () => {
     }
 
     if (empresa.value.id) {
-      await axios.put(`http://localhost:8080/api/empresa/${empresa.value.id}`, payload)
+      await axios.delete(`http://localhost:8080/api/empresa/${empresa.cnpj}`)
     } else {
       await axios.post('http://localhost:8080/api/empresa', payload)
     }
@@ -145,8 +192,9 @@ const items = computed(() => empresasFiltradas.value)
             <td>{{ empresa.nome }}</td>
             <td>{{ empresa.cnpj }}</td>
             <td>{{ empresa.endereco }}</td>
-            <td class="text-center">
+            <td class="flex justify-center gap-2">
               <UButton icon="heroicons:pencil-square" color="primary" variant="ghost" @click="editarEmpresa(empresa)" />
+              <UButton icon="heroicons:trash" color="red" variant="ghost" @click="abrirConfirmacaoExclusao(empresa)" />
             </td>
           </tr>
         </tbody>
@@ -157,6 +205,7 @@ const items = computed(() => empresasFiltradas.value)
       </div>
     </UCard>
 
+    <!-- Modal de Cadastro -->
     <UModal v-model="modalAberto">
       <UCard class="max-w-lg mx-auto">
         <template #header>
@@ -171,6 +220,25 @@ const items = computed(() => empresasFiltradas.value)
           <div class="flex justify-end gap-2">
             <UButton @click="fecharModal" color="gray">Cancelar</UButton>
             <UButton @click="salvarCadastro" color="primary">Salvar</UButton>
+          </div>
+        </template>
+      </UCard>
+    </UModal>
+
+    <!-- Modal de Confirmação de Exclusão -->
+    <UModal v-model="confirmarExclusaoAberto">
+      <UCard class="max-w-md mx-auto">
+        <template #header>
+          <h2 class="text-lg font-bold text-red-600">Confirmar Exclusão</h2>
+        </template>
+        <div class="space-y-2">
+          <p>Você tem certeza que deseja excluir a empresa <strong>{{ empresaParaExcluir?.nome }}</strong>?</p>
+          <p class="text-sm text-gray-500">Esta ação não poderá ser desfeita.</p>
+        </div>
+        <template #footer>
+          <div class="flex justify-end gap-2">
+            <UButton @click="cancelarExclusao" color="gray">Cancelar</UButton>
+            <UButton @click="confirmarExclusao" color="red">Excluir</UButton>
           </div>
         </template>
       </UCard>
