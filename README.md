@@ -2,7 +2,7 @@
 
 Este repositório se refere ao projeto Altime, um sistema de controle de ponto com três frentes de uso. A aplicação permite o cadastro de empresas e colaboradores, centralizando a gestão de informações e otimizando o acompanhamento de dados por meio de dashboards interativos, voltado à análise e tomada de decisões com base em métricas e indicadores de desempenho.
 
-> Aplicação desenvolvida por alunos do 3º semestre do tecnólogo do curso de Banco de Dados, na FATEC Profº Jessen Vidal – São José dos Campos, SP.
+> Aplicação desenvolvida por alunos do 3º semestre do tecnólogo em Banco de Dados, na FATEC Profº Jessen Vidal – São José dos Campos, SP.
 
 
 ### :hammer_and_wrench: Tecnologias
